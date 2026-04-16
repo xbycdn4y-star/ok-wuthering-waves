@@ -1,4 +1,5 @@
-ok-script
+ok-script==1.0.106; sys_platform == "win32"
+ok-script @ git+https://github.com/xbycdn4y-star/ok-script.git@linux-x11-bootstrap; sys_platform != "win32"
 onnxocr-ppocrv4==0.0.5
 openvino
 opencv-python

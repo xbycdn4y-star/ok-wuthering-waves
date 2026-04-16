@@ -88,6 +88,12 @@
 
 本项目仅支持 Python 3.12 版本。
 
+Linux / CachyOS 实验性分支说明:
+
+- Windows 仍然使用默认 `ok-script==1.0.106`。
+- Linux 会从 `xbycdn4y-star/ok-script` 的 `linux-x11-bootstrap` 分支安装实验性兼容版本。
+- 当前目标仅为“Linux 下可启动 UI 并完成后续 Linux capture/input 适配的基础导入链”，并不等同于已完整支持 Linux 自动化。
+
 ```bash
 # 安装或更新依赖
 pip install -r requirements.txt --upgrade
