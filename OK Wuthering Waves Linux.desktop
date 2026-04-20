@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=OK WW Linux
+Comment=Launch OK WW Linux with X11
+Exec=env QT_QPA_PLATFORM=xcb /home/t/Desktop/02_项目与代码/ok-wuthering-waves-linux/.venv/bin/python /home/t/Desktop/okww-linux/main.py -name ok-ww-linux
+Path=/home/t/Desktop/okww-linux
+Terminal=false
+StartupNotify=true
+StartupWMClass=ok-ww-linux
+Categories=Game;

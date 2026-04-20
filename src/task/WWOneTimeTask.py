@@ -7,6 +7,6 @@ class WWOneTimeTask:
     def run(self):
         mouse_reset_task = self.executor.get_task_by_class(MouseResetTask)
         mouse_reset_task.run()
-        if isinstance(self.executor.interaction, PostMessageInteraction):
+        if isinstance(self.executor.interaction, PostMessageInteraction) or hasattr(self.executor.interaction, 'activate'):
             self.executor.interaction.activate()
         self.sleep(0.5)

@@ -121,6 +121,11 @@ config = {
         'check_night_light': True,
         'force_no_night_light': False,
     },
+    'linux_x11': {
+        'title': re.compile(r'Wuthering Waves|鸣潮', re.IGNORECASE),
+        'capture_method': ['X11Region'],
+        'interaction': ['X11Foreground'],
+    },
     'window_size': {
         'width': 1200,
         'height': 800,
