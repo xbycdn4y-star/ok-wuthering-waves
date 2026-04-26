@@ -1,5 +1,7 @@
 import math
+import os
 import re
+import sys
 import time
 from datetime import datetime, timedelta
 
@@ -636,13 +638,77 @@ class BaseWWTask(BaseTask):
         return False, max_echo_count > 1
 
     def center_camera(self):
-        self.click(0.5, 0.5, down_time=0.2, key='middle')
+        self.middle_click(down_time=0.2)
         self.sleep(1)
 
     def turn_direction(self, direction):
         if direction != 'w':
             self.send_key(direction, down_time=0.05, after_sleep=0.5)
         self.center_camera()
+
+    def middle_click(self, *args, **kwargs):
+        self._ignore_mouse_reset_for(0.5)
+        if sys.platform.startswith('linux') and not args and 'x' not in kwargs and 'y' not in kwargs:
+            interval = kwargs.get('interval', -1)
+            if not self.check_interval(interval):
+                self.executor.reset_scene()
+                return False
+            self.executor.interaction.click(
+                -1, -1,
+                move_back=kwargs.get('move_back', False),
+                name=kwargs.get('name'),
+                move=False,
+                down_time=kwargs.get('down_time', 0.01),
+                key='middle',
+            )
+            after_sleep = kwargs.get('after_sleep', 0)
+            if after_sleep > 0:
+                self.sleep(after_sleep)
+            self.executor.reset_scene()
+            result = True
+        else:
+            result = super().middle_click(*args, **kwargs)
+        self._ignore_mouse_reset_for(0.5)
+        return result
+
+    def turn_camera_by_angle(self, angle, scale=1.0):
+        if angle is None or not sys.platform.startswith('linux'):
+            return False
+        if os.environ.get('OK_WW_ENABLE_RELATIVE_CAMERA', '0') != '1':
+            return False
+        interaction = getattr(self.executor, 'interaction', None)
+        move_mouse_relative = getattr(interaction, 'move_mouse_relative', None)
+        if move_mouse_relative is None:
+            return False
+        try:
+            pixels_per_degree = float(os.environ.get('OK_WW_CAMERA_PIXELS_PER_DEGREE', '6'))
+            max_pixels = int(os.environ.get('OK_WW_CAMERA_MAX_PIXELS', '900'))
+        except ValueError:
+            pixels_per_degree = 6
+            max_pixels = 900
+        dx = int(max(-max_pixels, min(max_pixels, round(angle * pixels_per_degree * scale))))
+        if dx == 0:
+            return True
+        self._ignore_mouse_reset_for(0.3)
+        try:
+            moved = move_mouse_relative(dx, 0)
+        except Exception as e:
+            logger.debug(f'turn_camera_by_angle failed {angle}: {e}')
+            return False
+        if moved is False:
+            return False
+        self._ignore_mouse_reset_for(0.3)
+        self.sleep(0.05)
+        return True
+
+    def _ignore_mouse_reset_for(self, seconds):
+        try:
+            from src.task.MouseResetTask import MouseResetTask
+            mouse_reset_task = self.executor.get_task_by_class(MouseResetTask)
+            if mouse_reset_task is not None:
+                mouse_reset_task.ignore_mouse_reset_for(seconds)
+        except Exception as e:
+            logger.debug(f'ignore mouse reset failed: {e}')
 
     def walk_find_echo(self, backward_time=1, time_out=3):
         if self.walk_until_f(time_out=time_out, backward_time=backward_time, target_text=self.absorb_echo_text(),
@@ -828,11 +894,12 @@ class BaseWWTask(BaseTask):
                 minor_adjust = None
 
             if minor_adjust:
-                self.send_key_down(minor_adjust)
-                self.sleep(0.1)
-                self.middle_click(down_time=0.1)
-                self.send_key_up(minor_adjust)
-                self.sleep(0.01)
+                if not self.turn_camera_by_angle(angle, scale=0.6):
+                    self.send_key_down(minor_adjust)
+                    self.sleep(0.1)
+                    self.middle_click(down_time=0.1)
+                    self.send_key_up(minor_adjust)
+                    self.sleep(0.01)
                 # Tell the caller to continue to the next loop iteration
                 return current_direction, current_adjust, True
 
@@ -858,7 +925,8 @@ class BaseWWTask(BaseTask):
                 self.mouse_up(key='right')
                 self.send_key_up(current_direction)
                 self.wait_until(self.in_combat, time_out=0.2)
-            self.turn_direction(new_direction)
+            if not self.turn_camera_by_angle(angle):
+                self.turn_direction(new_direction)
             self.send_key_down('w')
             self.wait_until(self.in_combat, time_out=0.2)
             self.mouse_down(key='right')

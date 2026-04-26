@@ -1,4 +1,5 @@
 import math
+import time
 
 from qfluentwidgets import FluentIcon
 
@@ -21,6 +22,10 @@ class MouseResetTask(TriggerTask):
         self.icon = FluentIcon.MOVE
         self.running_reset = False
         self.mouse_pos = None
+        self.ignore_until = 0
+
+    def ignore_mouse_reset_for(self, seconds=0.3):
+        self.ignore_until = max(self.ignore_until, time.time() + seconds)
 
     def run(self):
         if self.is_browser():
@@ -38,6 +43,11 @@ class MouseResetTask(TriggerTask):
             return
         try:
             current_position = win32api.GetCursorPos()
+            if time.time() < self.ignore_until:
+                self.mouse_pos = current_position
+                if self.enabled:
+                    return self.handler.post(self.mouse_reset, 0.01)
+                return
             if self.mouse_pos and self.hwnd and self.hwnd.exists and not self.hwnd.visible and self.executor.interaction and self.executor.interaction.capture:
                 center_pos = self.executor.interaction.capture.get_abs_cords(self.width_of_screen(0.5),
                                                                              self.height_of_screen(0.5))
