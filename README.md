@@ -93,16 +93,23 @@ Linux / CachyOS 实验性分支说明:
 - Windows 仍然使用默认 `ok-script==1.0.106`。
 - Linux 会从 `xbycdn4y-star/ok-script` 的 `linux-x11-bootstrap` 分支安装实验性兼容版本。
 - 当前目标仅为“Linux 下可启动 UI 并完成后续 Linux capture/input 适配的基础导入链”，并不等同于已完整支持 Linux 自动化。
+- Linux 桌面环境建议使用 X11/XWayland；若窗口激活失败，可安装 `xdotool` 作为后备。
 
 ```bash
 # 安装或更新依赖
 pip install -r requirements.txt --upgrade
+
+# Linux / X11 推荐启动方式，会自动使用 .venv/bin/python
+./run_linux.sh
 
 # 运行 Release 版本
 python main.py
 
 # 运行 Debug 版本
 python main_debug.py
+
+# Linux / macOS 测试
+./run_tests.sh
 ```
 
 ### 命令行参数

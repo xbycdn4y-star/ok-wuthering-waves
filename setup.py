@@ -1,37 +1,34 @@
 import setuptools
-from Cython.Build import cythonize
-from distutils.extension import Extension
 from setuptools import Extension
 
 import os
+from pathlib import Path
+
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    cythonize = None
 
 os.environ["PYTHONIOENCODING"] = "utf-8"
 
 
 def find_pyx_packages(base_dir):
     extensions = []
-    for dirpath, _, filenames in os.walk(base_dir):
-        for filename in filenames:
-            if filename.endswith(".pyx"):
-                module_path = os.path.join(dirpath, filename).replace('/', '.').replace('\\', '.')
-                module_name = module_path[:-4]  # Remove the .pyx extension
-                extensions.append(
-                    Extension(name=module_name, language="c++", sources=[os.path.join(dirpath, filename)]))
-                print(f'add Extension: {module_name} {[os.path.join(dirpath, filename)]}')
+    for path in Path(base_dir).rglob("*.pyx"):
+        module_name = ".".join(path.with_suffix("").parts)
+        extensions.append(Extension(name=module_name, language="c++", sources=[str(path)]))
+        print(f'add Extension: {module_name} {[str(path)]}')
     return extensions
 
 
-def find_packages_with_init_files(base_dir):
-    packages = []
-    for dirpath, dirnames, filenames in os.walk(base_dir):
-        if '__init__.py' in filenames:
-            package = dirpath.replace('/', '.').replace('\\', '.')
-            packages.append(package)
-    return packages
+def build_extensions(base_dir):
+    extensions = find_pyx_packages(base_dir)
+    if not extensions:
+        return []
+    if cythonize is None:
+        raise RuntimeError("Cython is required to build .pyx extensions")
+    return cythonize(extensions, compiler_directives={'language_level': "3"})
 
-
-base_dir = "src"
-extensions = find_pyx_packages(base_dir)
 
 setuptools.setup(
     name="ok-ww",
@@ -59,5 +56,5 @@ setuptools.setup(
         'psutil>=6.0.0'
     ],
     python_requires='>=3.9',
-    ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"})
+    ext_modules=build_extensions("src")
 )

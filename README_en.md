@@ -86,16 +86,23 @@ Experimental Linux / CachyOS bootstrap notes:
 - Windows keeps using the default `ok-script==1.0.106`.
 - Linux installs an experimental compatibility branch from `xbycdn4y-star/ok-script` at `linux-x11-bootstrap`.
 - The current goal is only to make the UI and import chain start on Linux as a foundation for later Linux capture/input work. It does not mean full Linux automation support yet.
+- Linux desktop sessions should use X11/XWayland; install `xdotool` if window activation needs the fallback path.
 
 ```bash
 # Install or update dependencies
 pip install -r requirements.txt --upgrade
+
+# Recommended Linux / X11 launcher, automatically uses .venv/bin/python
+./run_linux.sh
 
 # Run Release version
 python main.py
 
 # Run Debug version
 python main_debug.py
+
+# Linux / macOS tests
+./run_tests.sh
 ```
 
 ### Command-Line Arguments

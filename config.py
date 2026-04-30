@@ -5,7 +5,10 @@ from pathlib import Path
 import numpy as np
 
 from ok import ConfigOption
+from src.platform_compat import IS_LINUX, IS_WINDOWS, configure_runtime
 from src.task.process_feature import process_feature
+
+configure_runtime()
 
 version = "dev"
 
@@ -78,6 +81,34 @@ monthly_card_config_option = ConfigOption('Monthly Card Config', {
     'Monthly Card Time': 'Your computer\'s local time when the monthly card will popup, hour in (1-24)'
 })
 
+WINDOWS_CAPTURE_CONFIG = {
+    'top_hwnd_class': [re.compile('CAgreementDlg'), re.compile('CLoginDlg_P_'),
+                       'CefBrowserWindow', 'Chrome_RenderWidgetHostHWND',
+                       re.compile('CNativeLoginDlg'), 'ComboLBox', '#32770'
+                       ],
+    'calculate_pc_exe_path': calculate_pc_exe_path,
+    'exe': 'Client-Win64-Shipping.exe',
+    'hwnd_class': 'UnrealWindow',
+    'interaction': 'PostMessage',
+    'capture_method': ['WGC', 'BitBlt_RenderFull'],  # Windows版本支持的话, 优先使用WGC, 否则使用BitBlt_Full
+    'check_hdr': False,
+    'force_no_hdr': False,
+    'check_night_light': True,
+    'force_no_night_light': False,
+}
+
+LINUX_X11_CAPTURE_CONFIG = {
+    'title': re.compile(r'Wuthering Waves|鸣潮', re.IGNORECASE),
+    'capture_method': ['X11Region'],
+    'interaction': ['X11Foreground'],
+}
+
+PC_CAPTURE_CONFIG = {}
+if IS_WINDOWS:
+    PC_CAPTURE_CONFIG['windows'] = WINDOWS_CAPTURE_CONFIG
+elif IS_LINUX:
+    PC_CAPTURE_CONFIG['linux_x11'] = LINUX_X11_CAPTURE_CONFIG
+
 config = {
     'debug': False,  # Optional, default: False
     'use_gui': True,
@@ -106,26 +137,7 @@ config = {
         'vcenter_features': ['monthly_card'],
         'hcenter_features': ['monthly_card']
     },
-    'windows': {  # required  when supporting windows game
-        'top_hwnd_class': [re.compile('CAgreementDlg'), re.compile('CLoginDlg_P_'),
-                           'CefBrowserWindow', 'Chrome_RenderWidgetHostHWND',
-                           re.compile('CNativeLoginDlg'), 'ComboLBox', '#32770'
-                           ],
-        'calculate_pc_exe_path': calculate_pc_exe_path,
-        'exe': 'Client-Win64-Shipping.exe',
-        'hwnd_class': 'UnrealWindow',
-        'interaction': 'PostMessage',
-        'capture_method': ['WGC', 'BitBlt_RenderFull'],  # Windows版本支持的话, 优先使用WGC, 否则使用BitBlt_Full
-        'check_hdr': False,
-        'force_no_hdr': False,
-        'check_night_light': True,
-        'force_no_night_light': False,
-    },
-    'linux_x11': {
-        'title': re.compile(r'Wuthering Waves|鸣潮', re.IGNORECASE),
-        'capture_method': ['X11Region'],
-        'interaction': ['X11Foreground'],
-    },
+    **PC_CAPTURE_CONFIG,
     'window_size': {
         'width': 1200,
         'height': 800,

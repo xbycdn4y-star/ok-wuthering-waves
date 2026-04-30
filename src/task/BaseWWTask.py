@@ -1,7 +1,5 @@
 import math
-import os
 import re
-import sys
 import time
 from datetime import datetime, timedelta
 
@@ -12,6 +10,7 @@ from ok import CannotFindException
 import cv2
 
 from src.Labels import Labels
+from src.platform_compat import IS_LINUX, env_flag, env_float, env_int
 from src.scene.WWScene import WWScene
 
 logger = Logger.get_logger(__name__)
@@ -648,7 +647,7 @@ class BaseWWTask(BaseTask):
 
     def middle_click(self, *args, **kwargs):
         self._ignore_mouse_reset_for(0.5)
-        if sys.platform.startswith('linux') and not args and 'x' not in kwargs and 'y' not in kwargs:
+        if IS_LINUX and not args and 'x' not in kwargs and 'y' not in kwargs:
             interval = kwargs.get('interval', -1)
             if not self.check_interval(interval):
                 self.executor.reset_scene()
@@ -672,20 +671,16 @@ class BaseWWTask(BaseTask):
         return result
 
     def turn_camera_by_angle(self, angle, scale=1.0):
-        if angle is None or not sys.platform.startswith('linux'):
+        if angle is None or not IS_LINUX:
             return False
-        if os.environ.get('OK_WW_ENABLE_RELATIVE_CAMERA', '0') != '1':
+        if not env_flag('OK_WW_ENABLE_RELATIVE_CAMERA'):
             return False
         interaction = getattr(self.executor, 'interaction', None)
         move_mouse_relative = getattr(interaction, 'move_mouse_relative', None)
         if move_mouse_relative is None:
             return False
-        try:
-            pixels_per_degree = float(os.environ.get('OK_WW_CAMERA_PIXELS_PER_DEGREE', '6'))
-            max_pixels = int(os.environ.get('OK_WW_CAMERA_MAX_PIXELS', '900'))
-        except ValueError:
-            pixels_per_degree = 6
-            max_pixels = 900
+        pixels_per_degree = env_float('OK_WW_CAMERA_PIXELS_PER_DEGREE', 6.0)
+        max_pixels = env_int('OK_WW_CAMERA_MAX_PIXELS', 900)
         dx = int(max(-max_pixels, min(max_pixels, round(angle * pixels_per_degree * scale))))
         if dx == 0:
             return True

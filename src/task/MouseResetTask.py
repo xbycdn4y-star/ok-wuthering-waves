@@ -4,7 +4,7 @@ import time
 from qfluentwidgets import FluentIcon
 
 from ok import TriggerTask, Logger
-from ok.compat.win32 import win32api
+from ok.compat.win32 import IS_WINDOWS, win32api
 
 logger = Logger.get_logger(__name__)
 
@@ -13,12 +13,12 @@ class MouseResetTask(TriggerTask):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.default_config = {'_enabled': True}
+        self.default_config = {'_enabled': IS_WINDOWS}
         self.group_name = "Diagnosis"
         self.group_icon = FluentIcon.ROBOT
         self.trigger_interval = 10
         self.name = "Prevent Wuthering Waves from moving the mouse"
-        self.description = "Turn on if you mouse jumps around"
+        self.description = "Windows only. Turn on if your mouse jumps around"
         self.icon = FluentIcon.MOVE
         self.running_reset = False
         self.mouse_pos = None
@@ -28,7 +28,7 @@ class MouseResetTask(TriggerTask):
         self.ignore_until = max(self.ignore_until, time.time() + seconds)
 
     def run(self):
-        if self.is_browser():
+        if not IS_WINDOWS or self.is_browser():
             return
         if self.enabled:
             if not self.running_reset:
@@ -39,7 +39,7 @@ class MouseResetTask(TriggerTask):
             self.running_reset = False
 
     def mouse_reset(self):
-        if self.is_browser():
+        if not IS_WINDOWS or self.is_browser():
             return
         try:
             current_position = win32api.GetCursorPos()
