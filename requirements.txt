@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements.in
 #
-ok-script==1.0.106 ; sys_platform == "win32"
+ok-script==1.0.109 ; sys_platform == "win32"
     # via -r requirements.in
 ok-script @ git+https://github.com/xbycdn4y-star/ok-script.git@linux-x11-bootstrap ; sys_platform != "win32"
     # via -r requirements.in
